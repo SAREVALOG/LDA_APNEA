@@ -1,0 +1,490 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>respiratory</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-11-12"><meta name="DC.source" content="respiratory.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% This programm reads ECG data which are saved in format 212.</span>
+<span class="comment">% and Respiratory data which are saved in format 16 (apnea-ecg database)</span>
+<span class="comment">% The annotations are saved in the vector ANNOT, the corresponding</span>
+<span class="comment">% times (in seconds) are saved in the vector ATRTIME.</span>
+<span class="comment">% The annotations are saved as numbers, the meaning of the numbers can</span>
+<span class="comment">% be found in the codetable "ecgcodes.h" available at www.physionet.org.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%      created on 2015 by</span>
+<span class="comment">%      Santiago Arevalo (National University of Entre Rios)</span>
+<span class="comment">%      (email: sarevalog@correo.udistrital.edu.co),</span>
+<span class="comment">%</span>
+<span class="comment">%      algorithm is based on a program written by</span>
+<span class="comment">%      Klaus Rheinberger (University of Innsbruck)</span>
+<span class="comment">%      (email: klaus.rheinberger@uibk.ac.at)</span>
+<span class="comment">%</span>
+<span class="comment">% -------------------------------------------------------------------------</span>
+clc; clear <span class="string">all</span>;
+
+PATH= <span class="string">'/home/sarevalog/Dropbox/MAESTRIA/THESIS/CODIGOS/MATLAB/RESPIRATORY'</span>;
+
+<span class="comment">%Lee la se&ntilde;al ECG de un archivo y las se&ntilde;ales respiratorias de otro</span>
+
+sig=<span class="string">'a01'</span>;
+
+HEADERFILE= [sig <span class="string">'er'</span> <span class="string">'.hea'</span>];      <span class="comment">% header-file in text format</span>
+
+DATAFILEECG=[sig <span class="string">'.dat'</span>];         <span class="comment">% data-file</span>
+
+DATAFILERES=[sig <span class="string">'r'</span> <span class="string">'.dat'</span>];         <span class="comment">% data-file</span>
+
+ATRFILE = [sig <span class="string">'r'</span> <span class="string">'.apn'</span>];       <span class="comment">% apnea annotations</span>
+
+SAMPLES2READ = 50;
+<span class="comment">% ------ LOAD HEADER DATA --------------------------------------------------</span>
+
+fprintf(1,<span class="string">'\\n$&gt; WORKING ON %s ...\n'</span>, HEADERFILE);
+signalh= fullfile(PATH, HEADERFILE);
+fid1=fopen(signalh,<span class="string">'r'</span>);
+z= fgetl(fid1);
+A= sscanf(z, <span class="string">'%*s %d %d %d'</span>,[1,3]);
+nosig= A(1);  <span class="comment">% number of signals</span>
+sfreq=A(2);   <span class="comment">% sample rate of data</span>
+samples = A(3);
+clear <span class="string">A</span>;
+<span class="keyword">for</span> k=1:nosig
+    z= fgetl(fid1);
+    A= sscanf(z, <span class="string">'%*s %d %d %d %d %d %d %d %*s'</span>,[1,5]);
+    dformat(k)= A(1);           <span class="comment">% format;</span>
+    gain(k)= A(2);              <span class="comment">% number of integers per mV</span>
+    bitres(k)= A(3);            <span class="comment">% bitresolution</span>
+    zerovalue(k)= A(4);         <span class="comment">% integer value of ECG zero point</span>
+    firstvalue(k)= A(5);        <span class="comment">% first integer value of signal (to test for errors)</span>
+<span class="keyword">end</span>;
+fclose(fid1);
+clear <span class="string">A</span> <span class="string">fid1</span>;
+<span class="comment">%</span>
+<span class="comment">%------ LOAD BINARY DATA --------------------------------------------------</span>
+<span class="comment">%-------</span>
+<span class="comment">%-------ECG</span>
+<span class="comment">%-------</span>
+
+signalECG= fullfile(PATH, DATAFILEECG);            <span class="comment">% data in format 212</span>
+fid2=fopen(signalECG,<span class="string">'r'</span>);                         <span class="comment">%'r' open file for reading</span>
+A= fread(fid2, [2,inf], <span class="string">'uint8'</span>)';                 <span class="comment">% matrix with 3 rows, each 8 bits long, = 2*12bit</span>
+fclose(fid2);
+
+M1HA= bitand(A(:,2), 15);
+PRLA=bitshift(bitand(A(:,2),8),9);     <span class="comment">% sign-bit</span>
+ECG( : , 1)= bitshift(M1HA,8)+ A(:,1)-PRLA;
+<span class="keyword">if</span> ECG(1,1) ~= firstvalue, error(<span class="string">'inconsistency in the first bit values'</span>); <span class="keyword">end</span>;
+
+clear <span class="string">M1HA</span> <span class="string">PRLA</span> <span class="string">A</span>;
+
+<span class="comment">%-------</span>
+<span class="comment">%-------RES</span>
+<span class="comment">%-------</span>
+
+signalRES= fullfile(PATH, DATAFILERES);            <span class="comment">% data in format 16</span>
+fid3=fopen(signalRES,<span class="string">'r'</span>);                         <span class="comment">%'r' open file for reading</span>
+B = fread(fid3,[4,inf], <span class="string">'uint16'</span>)';                <span class="comment">% matrix with 4 rows</span>
+fclose(fid3);
+n=length(B);
+
+RES= zeros(samples, 4);                                  <span class="comment">% preallocating</span>
+
+<span class="keyword">for</span> k=1:n
+    val1 = B(k,1);
+    val2 = B(k,2);
+    val3 = B(k,3);
+    val4 = B(k,4);
+    y1 = sign(2^(16-1)-val1)*(2^(16-1)-abs(2^(16-1)-val1));
+    y2 = sign(2^(16-1)-val2)*(2^(16-1)-abs(2^(16-1)-val2));
+    y3 = sign(2^(16-1)-val3)*(2^(16-1)-abs(2^(16-1)-val3));
+    y4 = sign(2^(16-1)-val4)*(2^(16-1)-abs(2^(16-1)-val4));
+
+    <span class="keyword">if</span> ((y1 == 0) &amp;&amp; (val1 ~= 0))
+    RES(k , 1) = -val1;
+    <span class="keyword">else</span>
+    RES(k , 1) = y1;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ((y2 == 0) &amp;&amp; (val2 ~= 0))
+    RES(k , 2) = -val2;
+    <span class="keyword">else</span>
+    RES(k , 2) = y2;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ((y3 == 0) &amp;&amp; (val3 ~= 0))
+    RES(k , 3) = -val3;
+    <span class="keyword">else</span>
+    RES(k , 3) = y3;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ((y4 == 0) &amp;&amp; (val4 ~= 0))
+    RES(k , 4) = -val4;
+    <span class="keyword">else</span>
+    RES(k , 4) = y4;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>;
+
+clear <span class="string">val1</span> <span class="string">val2</span> <span class="string">val3</span> <span class="string">val4</span> <span class="string">y1</span> <span class="string">y2</span> <span class="string">y3</span> <span class="string">y4</span> <span class="string">n</span> <span class="string">fid2</span> <span class="string">fid3</span>;
+
+<span class="keyword">for</span> k=2:nosig
+
+    RES( : , k -1 )= (RES( : , k -1)- zerovalue(k))/gain(k);
+
+<span class="keyword">end</span>;
+TIME=((0:(samples-1))/sfreq)';
+signal =[TIME , ECG , RES];
+
+clear <span class="string">ans</span> <span class="string">bitres</span> <span class="string">B</span> <span class="string">dformat</span> <span class="string">ECG</span> <span class="string">firstvalue</span> <span class="string">gain</span> <span class="string">k</span> <span class="string">nosig</span> <span class="string">RES</span> <span class="string">samples</span>;
+clear <span class="string">signalECG</span> <span class="string">signalh</span> <span class="string">signalRES</span> <span class="string">z</span> <span class="string">zerovalue</span>;
+
+fprintf(1,<span class="string">'\\n$&gt; LOADING DATA FINISHED \n'</span>);
+
+<span class="comment">%------ LOAD ATTRIBUTES DATA ----------------------------------------------</span>
+<span class="comment">% read from Physionet server</span>
+
+<span class="comment">% A=rdann('apnea-ecg/a01er','apn');</span>
+
+atrd= fullfile(PATH, ATRFILE);      <span class="comment">% attribute file with annotation data</span>
+fid3=fopen(atrd,<span class="string">'r'</span>);
+A= fread(fid3, [2, inf], <span class="string">'uint8'</span>)';
+fclose(fid3);
+
+ANNOT=[];
+ATRTIME = [];
+sa=size(A);
+saa=sa(1);
+</pre><pre class="codeoutput">\n$&gt; WORKING ON a01er.hea ...
+\n$&gt; LOADING DATA FINISHED 
+</pre><p><img src="respiratory_eq17467035999183504765.png" alt="$$e^{\pi i} + 1 = 0$$"></p><pre class="codeinput">i=1;
+<span class="keyword">while</span> i &lt;= saa
+    annoth = bitshift(A(i,2),-2);
+    <span class="keyword">if</span> annoth == 59
+        ANNOT = [ANNOT;bitshift(A(i + 3,2),-2)];
+      ATRTIME = [ATRTIME;A(i+2,1) + bitshift(A(i + 2,2),8) + bitshift(A(i + 1,1),16) + bitshift(A(i + 1,2),24)];
+        i = i + 3;
+    <span class="keyword">elseif</span> annoth == 60
+    <span class="keyword">elseif</span> annoth == 61
+    <span class="keyword">elseif</span> annoth == 62
+    <span class="keyword">elseif</span> annoth == 63
+        hilfe = bitshift(bitand(A(i,2),3),8) + A(i,1);
+        hilfe = hilfe + mod(hilfe,2);
+        i = i + hilfe/2;
+    <span class="keyword">else</span>
+        ATRTIME = [ATRTIME;bitshift(bitand(A(i,2),3),8) + A(i,1)];
+        ANNOT = [ANNOT;bitshift(A(i,2),-2)];
+   <span class="keyword">end</span>;
+   i = i + 1;
+<span class="keyword">end</span>;
+
+ANNOT(length(ANNOT)) = [];                  <span class="comment">% Last Line = EOF (= 0)</span>
+ATRTIME(length(ATRTIME)) = [];              <span class="comment">% Last Line = EOF</span>
+ATRTIME = (cumsum(ATRTIME))/sfreq;
+ind = find(ATRTIME &lt;= TIME(end));
+ATRTIMED = ATRTIME(ind);
+ANNOT = round(ANNOT);
+ANNOTD = ANNOT(ind);
+apnea = [ATRTIMED , ANNOTD];
+
+<span class="comment">%---------DISPLAY DATA ----------------------</span>
+figure(1); clf, box <span class="string">on</span>, hold <span class="string">on</span>
+
+liminf=720; limsup=780;
+<span class="comment">%liminf2=round((liminf/60000)+1);</span>
+<span class="comment">%limsup2=round((limsup/60000)+1);</span>
+
+plot(signal(liminf:limsup,1),signal(liminf:limsup,2),<span class="string">'g'</span>);   <span class="comment">%cambio de resp normal a apnea</span>
+plot(signal(liminf:limsup,1),signal(liminf:limsup,6),<span class="string">'r'</span>);
+
+<span class="keyword">for</span> k=13:14
+    text(ATRTIMED(k),0,num2str(ANNOTD(k)));
+<span class="keyword">end</span>;
+xlim([TIME(liminf), TIME(limsup)]);
+xlabel(<span class="string">'Time / s'</span>);
+ylabel(<span class="string">'ECG Voltaje / mV &amp; SpO2 % &amp; Marcador apnea'</span>);
+</pre><img vspace="5" hspace="5" src="respiratory_01.png" alt=""> <p><img src="respiratory_eq17467035999183504765.png" alt="$$e^{\pi i} + 1 = 0$$"></p><p><img src="respiratory_eq17467035999183504765.png" alt="$$e^{\pi i} + 1 = 0$$"></p><pre class="codeinput">clear <span class="string">A</span> <span class="string">ANNOT</span> <span class="string">ANNOTD</span> <span class="string">annoth</span> <span class="string">ans</span> <span class="string">ATRTIME</span> <span class="string">ATRTIMED</span> <span class="string">fid3</span> <span class="string">i</span> <span class="string">ind</span> <span class="string">sa</span> <span class="string">saa</span> <span class="string">sfreq</span> <span class="string">TIME</span>;
+
+
+<span class="comment">%fprintf(1,'\\n$&gt; DISPLAYING DATA FINISHED \n');</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% This programm reads ECG data which are saved in format 212.
+% and Respiratory data which are saved in format 16 (apnea-ecg database)
+% The annotations are saved in the vector ANNOT, the corresponding
+% times (in seconds) are saved in the vector ATRTIME.
+% The annotations are saved as numbers, the meaning of the numbers can
+% be found in the codetable "ecgcodes.h" available at www.physionet.org.
+%
+%
+%      created on 2015 by
+%      Santiago Arevalo (National University of Entre Rios)
+%      (email: sarevalog@correo.udistrital.edu.co),
+%
+%      algorithm is based on a program written by
+%      Klaus Rheinberger (University of Innsbruck)
+%      (email: klaus.rheinberger@uibk.ac.at)
+%
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+clc; clear all;
+
+PATH= '/home/sarevalog/Dropbox/MAESTRIA/THESIS/CODIGOS/MATLAB/RESPIRATORY';
+
+%Lee la señal ECG de un archivo y las señales respiratorias de otro
+
+sig='a01';
+
+HEADERFILE= [sig 'er' '.hea'];      % header-file in text format
+
+DATAFILEECG=[sig '.dat'];         % data-file
+
+DATAFILERES=[sig 'r' '.dat'];         % data-file
+
+ATRFILE = [sig 'r' '.apn'];       % apnea annotations
+
+SAMPLES2READ = 50;
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH LOAD HEADER DATA REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+
+fprintf(1,'\\n$> WORKING ON %s ...\n', HEADERFILE);
+signalh= fullfile(PATH, HEADERFILE);
+fid1=fopen(signalh,'r');
+z= fgetl(fid1);
+A= sscanf(z, '%*s %d %d %d',[1,3]);
+nosig= A(1);  % number of signals
+sfreq=A(2);   % sample rate of data
+samples = A(3);
+clear A;
+for k=1:nosig
+    z= fgetl(fid1);
+    A= sscanf(z, '%*s %d %d %d %d %d %d %d %*s',[1,5]);
+    dformat(k)= A(1);           % format; 
+    gain(k)= A(2);              % number of integers per mV
+    bitres(k)= A(3);            % bitresolution
+    zerovalue(k)= A(4);         % integer value of ECG zero point
+    firstvalue(k)= A(5);        % first integer value of signal (to test for errors)
+end;
+fclose(fid1);
+clear A fid1;
+%
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH LOAD BINARY DATA REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-ECG
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+
+signalECG= fullfile(PATH, DATAFILEECG);            % data in format 212
+fid2=fopen(signalECG,'r');                         %'r' open file for reading
+A= fread(fid2, [2,inf], 'uint8')';                 % matrix with 3 rows, each 8 bits long, = 2*12bit
+fclose(fid2);
+
+M1HA= bitand(A(:,2), 15);
+PRLA=bitshift(bitand(A(:,2),8),9);     % sign-bit
+ECG( : , 1)= bitshift(M1HA,8)+ A(:,1)-PRLA;
+if ECG(1,1) ~= firstvalue, error('inconsistency in the first bit values'); end;
+
+clear M1HA PRLA A;
+
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-RES
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+
+signalRES= fullfile(PATH, DATAFILERES);            % data in format 16
+fid3=fopen(signalRES,'r');                         %'r' open file for reading
+B = fread(fid3,[4,inf], 'uint16')';                % matrix with 4 rows
+fclose(fid3);
+n=length(B);
+
+RES= zeros(samples, 4);                                  % preallocating 
+
+for k=1:n
+    val1 = B(k,1);
+    val2 = B(k,2);
+    val3 = B(k,3);
+    val4 = B(k,4);
+    y1 = sign(2^(16-1)-val1)*(2^(16-1)-abs(2^(16-1)-val1)); 
+    y2 = sign(2^(16-1)-val2)*(2^(16-1)-abs(2^(16-1)-val2)); 
+    y3 = sign(2^(16-1)-val3)*(2^(16-1)-abs(2^(16-1)-val3)); 
+    y4 = sign(2^(16-1)-val4)*(2^(16-1)-abs(2^(16-1)-val4)); 
+    
+    if ((y1 == 0) && (val1 ~= 0)) 
+    RES(k , 1) = -val1; 
+    else 
+    RES(k , 1) = y1; 
+    end
+    
+    if ((y2 == 0) && (val2 ~= 0)) 
+    RES(k , 2) = -val2; 
+    else 
+    RES(k , 2) = y2; 
+    end
+    
+    if ((y3 == 0) && (val3 ~= 0)) 
+    RES(k , 3) = -val3; 
+    else 
+    RES(k , 3) = y3; 
+    end
+    
+    if ((y4 == 0) && (val4 ~= 0))
+    RES(k , 4) = -val4; 
+    else 
+    RES(k , 4) = y4; 
+    end
+end;
+
+clear val1 val2 val3 val4 y1 y2 y3 y4 n fid2 fid3;
+
+for k=2:nosig
+    
+    RES( : , k -1 )= (RES( : , k -1)- zerovalue(k))/gain(k);
+
+end;
+TIME=((0:(samples-1))/sfreq)';
+signal =[TIME , ECG , RES];
+
+clear ans bitres B dformat ECG firstvalue gain k nosig RES samples;
+clear signalECG signalh signalRES z zerovalue;
+
+fprintf(1,'\\n$> LOADING DATA FINISHED \n');
+
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH LOAD ATTRIBUTES DATA REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% read from Physionet server
+
+% A=rdann('apnea-ecg/a01er','apn');
+ 
+atrd= fullfile(PATH, ATRFILE);      % attribute file with annotation data
+fid3=fopen(atrd,'r');
+A= fread(fid3, [2, inf], 'uint8')';
+fclose(fid3);
+
+ANNOT=[];
+ATRTIME = [];
+sa=size(A);
+saa=sa(1);
+%%
+% 
+% $$e^{\pi i} + 1 = 0$$
+% 
+
+i=1;
+while i <= saa
+    annoth = bitshift(A(i,2),-2);
+    if annoth == 59
+        ANNOT = [ANNOT;bitshift(A(i + 3,2),-2)];
+      ATRTIME = [ATRTIME;A(i+2,1) + bitshift(A(i + 2,2),8) + bitshift(A(i + 1,1),16) + bitshift(A(i + 1,2),24)];
+        i = i + 3;
+    elseif annoth == 60
+    elseif annoth == 61
+    elseif annoth == 62
+    elseif annoth == 63
+        hilfe = bitshift(bitand(A(i,2),3),8) + A(i,1);
+        hilfe = hilfe + mod(hilfe,2);
+        i = i + hilfe/2;
+    else
+        ATRTIME = [ATRTIME;bitshift(bitand(A(i,2),3),8) + A(i,1)];
+        ANNOT = [ANNOT;bitshift(A(i,2),-2)];
+   end;
+   i = i + 1;
+end;
+
+ANNOT(length(ANNOT)) = [];                  % Last Line = EOF (= 0)
+ATRTIME(length(ATRTIME)) = [];              % Last Line = EOF
+ATRTIME = (cumsum(ATRTIME))/sfreq;
+ind = find(ATRTIME <= TIME(end));
+ATRTIMED = ATRTIME(ind);
+ANNOT = round(ANNOT);
+ANNOTD = ANNOT(ind);
+apnea = [ATRTIMED , ANNOTD];
+
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-DISPLAY DATA REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+figure(1); clf, box on, hold on
+
+liminf=720; limsup=780;
+%liminf2=round((liminf/60000)+1); 
+%limsup2=round((limsup/60000)+1);
+
+plot(signal(liminf:limsup,1),signal(liminf:limsup,2),'g');   %cambio de resp normal a apnea
+plot(signal(liminf:limsup,1),signal(liminf:limsup,6),'r');
+
+for k=13:14
+    text(ATRTIMED(k),0,num2str(ANNOTD(k)));
+end;
+xlim([TIME(liminf), TIME(limsup)]);
+xlabel('Time / s'); 
+ylabel('ECG Voltaje / mV & SpO2 % & Marcador apnea');
+%%
+% 
+% $$e^{\pi i} + 1 = 0$$
+% 
+% $$e^{\pi i} + 1 = 0$$
+% 
+% 
+
+clear A ANNOT ANNOTD annoth ans ATRTIME ATRTIMED fid3 i ind sa saa sfreq TIME;
+
+
+%fprintf(1,'\\n$> DISPLAYING DATA FINISHED \n');
+
+
+
+##### SOURCE END #####
+--></body></html>
